@@ -26,6 +26,7 @@ paths:
           application/json:
             schema:
               type: object
+              required: [name, email, password]
               properties:
                 name:
                   type: string
@@ -47,6 +48,7 @@ paths:
           application/json:
             schema:
               type: object
+              required: [email, password]
               properties:
                 email:
                   type: string
@@ -55,9 +57,155 @@ paths:
       responses:
         '200':
           description: OK
+  
+  /api/users:
+    get:
+      summary: Get all users (Admin only)
+      tags: [Users]
+      responses:
+        '200':
+          description: OK
+  /api/users/{id}/role:
+    put:
+      summary: Update user role (Admin only)
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role:
+                  type: string
+                  enum: [VIEWER, ANALYST, ADMIN]
+      responses:
+        '200':
+          description: OK
+  /api/users/{id}/status:
+    put:
+      summary: Activate or deactivate a user (Admin only)
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [isActive]
+              properties:
+                isActive:
+                  type: boolean
+      responses:
+        '200':
+          description: OK
+
+  /api/records:
+    get:
+      summary: Get all records
+      tags: [Records]
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create a new record
+      tags: [Records]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, type, category, date]
+              properties:
+                amount:
+                  type: number
+                type:
+                  type: string
+                  enum: [INCOME, EXPENSE]
+                category:
+                  type: string
+                date:
+                  type: string
+                  format: date-time
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Created
+  /api/records/{id}:
+    get:
+      summary: Get a record by ID
+      tags: [Records]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+    put:
+      summary: Update a record by ID
+      tags: [Records]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                type:
+                  type: string
+                  enum: [INCOME, EXPENSE]
+                category:
+                  type: string
+                date:
+                  type: string
+                  format: date-time
+                description:
+                  type: string
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Delete a record by ID
+      tags: [Records]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+
   /api/dashboard:
     get:
-      summary: Get dashboard analytics
+      summary: Get dashboard analytics calculations
       tags: [Dashboard]
       responses:
         '200':

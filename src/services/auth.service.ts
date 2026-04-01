@@ -14,9 +14,7 @@ export const registerUser = async (data: any) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // First user registration gets ADMIN automatically just for convenience in this assignment, 
-    // or we can strictly enforce VIEWER setup. Let's make it strict VIEWER and require DB intervention or 
-    // special route to make an admin. Actually, if count is 0, make it ADMIN.
+    // First registered user becomes ADMIN; subsequent users default to VIEWER
     const userCount = await prisma.user.count();
     const role = userCount === 0 ? 'ADMIN' : 'VIEWER';
 

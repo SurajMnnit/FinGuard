@@ -1,7 +1,8 @@
 import prisma from '../config/prisma';
 
 export const getDashboardAnalytics = async (userId: number, role: string) => {
-    const whereClause = role === 'ADMIN' || role === 'ANALYST' ? {} : { userId };
+    const isPrivileged = role === 'ADMIN' || role === 'ANALYST';
+    const whereClause = isPrivileged ? {} : { userId };
 
     // 1. Total Income & Total Expense
     const aggregations = await prisma.record.groupBy({
@@ -15,7 +16,7 @@ export const getDashboardAnalytics = async (userId: number, role: string) => {
     let totalIncome = 0;
     let totalExpense = 0;
 
-    aggregations.forEach((agg) => {
+    aggregations.forEach((agg: any) => {
         if (agg.type === 'INCOME') totalIncome = agg._sum.amount || 0;
         if (agg.type === 'EXPENSE') totalExpense = agg._sum.amount || 0;
     });
@@ -36,38 +37,38 @@ export const getDashboardAnalytics = async (userId: number, role: string) => {
         },
     });
 
-    const categoryData = categoryTotals.map((cat) => ({
+    const categoryData = categoryTotals.map((cat: any) => ({
         category: cat.category,
         type: cat.type,
         total: cat._sum.amount || 0,
     }));
 
     // 3. Monthly Trends (Using raw query for date formatting)
-    let monthlyTrends = [];
+    let monthlyTrends: any[] = [];
     try {
-        if (role === 'ADMIN' || role === 'ANALYST') {
-            monthlyTrends = await prisma.$queryRaw`
-        SELECT 
-          TO_CHAR("date", 'YYYY-MM') as month, 
-          "type", 
-          SUM("amount") as total
-        FROM "Record"
-        GROUP BY TO_CHAR("date", 'YYYY-MM'), "type"
-        ORDER BY month ASC
-      `;
+        if (isPrivileged) {
+            monthlyTrends = await prisma.$queryRaw<any[]>`
+                SELECT 
+                  TO_CHAR("date", 'YYYY-MM') as month, 
+                  "type", 
+                  SUM("amount") as total
+                FROM "Record"
+                GROUP BY TO_CHAR("date", 'YYYY-MM'), "type"
+                ORDER BY month ASC
+            `;
         } else {
-            monthlyTrends = await prisma.$queryRaw`
-        SELECT 
-          TO_CHAR("date", 'YYYY-MM') as month, 
-          "type", 
-          SUM("amount") as total
-        FROM "Record"
-        WHERE "userId" = ${userId}
-        GROUP BY TO_CHAR("date", 'YYYY-MM'), "type"
-        ORDER BY month ASC
-      `;
+            monthlyTrends = await prisma.$queryRaw<any[]>`
+                SELECT 
+                  TO_CHAR("date", 'YYYY-MM') as month, 
+                  "type", 
+                  SUM("amount") as total
+                FROM "Record"
+                WHERE "userId" = ${userId}
+                GROUP BY TO_CHAR("date", 'YYYY-MM'), "type"
+                ORDER BY month ASC
+            `;
         }
-        // Parse BigInt to Number if needed, prisma.$queryRaw might return BigInt for SUM
+        // Parse BigInt to Number — prisma.$queryRaw may return BigInt for SUM
         monthlyTrends = monthlyTrends.map((trend: any) => ({
             ...trend,
             total: Number(trend.total),
@@ -77,12 +78,21 @@ export const getDashboardAnalytics = async (userId: number, role: string) => {
     }
 
     // 4. Recent Transactions
-    const recentTransactions = await prisma.record.findMany({
-        where: whereClause,
-        orderBy: { date: 'desc' },
-        take: 5,
-        include: (role === 'ADMIN' || role === 'ANALYST') ? { user: { select: { id: true, name: true } } } : undefined,
-    });
+    let recentTransactions;
+    if (isPrivileged) {
+        recentTransactions = await prisma.record.findMany({
+            where: whereClause,
+            orderBy: { date: 'desc' },
+            take: 5,
+            include: { user: { select: { id: true, name: true } } },
+        });
+    } else {
+        recentTransactions = await prisma.record.findMany({
+            where: whereClause,
+            orderBy: { date: 'desc' },
+            take: 5,
+        });
+    }
 
     return {
         overview: {
