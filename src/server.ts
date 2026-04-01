@@ -3,7 +3,8 @@ import app from './app';
 import { config } from './config/env';
 import prisma from './config/prisma';
 
-let server: Server;
+let server: Server | null = null;
+let isShutDown = false;
 
 prisma.$connect()
     .then(() => {
@@ -18,16 +19,20 @@ prisma.$connect()
     });
 
 const exitHandler = () => {
+    if (isShutDown) return;
+    isShutDown = true;
+
     if (server) {
-        server.close(async () => {
+        server.close(() => {
             console.log('Server closed');
-            await prisma.$disconnect();
-            process.exit(1);
+            prisma.$disconnect()
+                .catch((e: unknown) => console.error('Error during Prisma disconnect:', e))
+                .finally(() => process.exit(1));
         });
     } else {
-        prisma.$disconnect().finally(() => {
-            process.exit(1);
-        });
+        prisma.$disconnect()
+            .catch((e: unknown) => console.error('Error during Prisma disconnect:', e))
+            .finally(() => process.exit(1));
     }
 };
 
@@ -41,15 +46,19 @@ process.on('unhandledRejection', unexpectedErrorHandler);
 
 process.on('SIGTERM', () => {
     console.log('SIGTERM received');
+    if (isShutDown) return;
+    isShutDown = true;
+
     if (server) {
-        server.close(async () => {
-            await prisma.$disconnect();
+        server.close(() => {
             console.log('Server closed');
-            process.exit(0);
+            prisma.$disconnect()
+                .catch((e: unknown) => console.error('Error during Prisma disconnect:', e))
+                .finally(() => process.exit(0));
         });
     } else {
-        prisma.$disconnect().finally(() => {
-            process.exit(0);
-        });
+        prisma.$disconnect()
+            .catch((e: unknown) => console.error('Error during Prisma disconnect:', e))
+            .finally(() => process.exit(0));
     }
 });
