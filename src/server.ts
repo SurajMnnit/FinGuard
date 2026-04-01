@@ -1,8 +1,9 @@
+import { Server } from 'http';
 import app from './app';
 import { config } from './config/env';
 import prisma from './config/prisma';
 
-let server: any;
+let server: Server;
 
 prisma.$connect()
     .then(() => {
@@ -18,16 +19,19 @@ prisma.$connect()
 
 const exitHandler = () => {
     if (server) {
-        server.close(() => {
+        server.close(async () => {
             console.log('Server closed');
+            await prisma.$disconnect();
             process.exit(1);
         });
     } else {
-        process.exit(1);
+        prisma.$disconnect().finally(() => {
+            process.exit(1);
+        });
     }
 };
 
-const unexpectedErrorHandler = (error: any) => {
+const unexpectedErrorHandler = (error: unknown) => {
     console.error('Unexpected error:', error);
     exitHandler();
 };
@@ -38,6 +42,14 @@ process.on('unhandledRejection', unexpectedErrorHandler);
 process.on('SIGTERM', () => {
     console.log('SIGTERM received');
     if (server) {
-        server.close();
+        server.close(async () => {
+            await prisma.$disconnect();
+            console.log('Server closed');
+            process.exit(0);
+        });
+    } else {
+        prisma.$disconnect().finally(() => {
+            process.exit(0);
+        });
     }
 });
