@@ -1,6 +1,12 @@
-# FinGuard API Backend
+# FinGuard API Backend 🛡️
+
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen)](https://finguard-s4r4.onrender.com/)
+[![API Docs](https://img.shields.io/badge/API-Docs-blue)](https://finguard-s4r4.onrender.com/api-docs)
 
 A production-ready robust backend system for Finance Data Processing and Access Control, built using Node.js, Express, PostgreSQL, and Prisma ORM.
+
+**Live URL**: [https://finguard-s4r4.onrender.com/](https://finguard-s4r4.onrender.com/)
+
 
 ## Features
 
@@ -74,20 +80,12 @@ A production-ready robust backend system for Finance Data Processing and Access 
 
 You can deploy the backend securely using platforms like Render or Railway. 
 
-### Render Deployment Steps:
+### Render Manual Deployment Steps:
 1. Connect your GitHub repository to Render and create a new **Web Service**.
-2. **Build Command**: `npm install && npm run build && npx prisma generate`
-3. **Start Command**: `npm start`
+2. **Build Command**: `npm run render:build`
+3. **Start Command**: `npm run render:start`
 4. **Environment Variables**:
-   Add constraints such as `DATABASE_URL`, `JWT_SECRET`, `PORT`, `NODE_ENV=production`.
-5. Run your database migrations via the post-deploy trigger or manually during build.
-
-### Using Docker:
-Build your image using the provided Dockerfile:
-```bash
-docker build -t finguard-api .
-docker run -p 5000:5000 -d finguard-api 
-```
+   Add `DATABASE_URL`, `JWT_SECRET`, `PORT`, `NODE_ENV=production`.
 
 ---
 
@@ -96,15 +94,18 @@ docker run -p 5000:5000 -d finguard-api
 The project includes an interactive UI for exploring APIs via Swagger.
 Navigate to the docs route after starting up:
 
-**URL:** `http://localhost:5000/api-docs`
+**Production:** [https://finguard-s4r4.onrender.com/api-docs](https://finguard-s4r4.onrender.com/api-docs)
+**Local:** `http://localhost:5000/api-docs`
 
 ---
 
 ## Scripts
 
 - `npm run start` - Starts the compiled Node.js server.
-- `npm run dev` - Runs the server in development mode using Nodemon alongside TypeScript.
+- `npm run dev` - Runs the server in development mode using Nodemon.
 - `npm run build` - Compile the TypeScript code to plain JavaScript.
+- `npm run render:build` - Build command optimized for Render (installs devDeps for compilation).
+- `npm run render:start` - Start command optimized for Render (ensures DB schema is pushed).
 - `npm run prisma:migrate` - Applies outstanding Prisma migrations on Production.
 
 ---
