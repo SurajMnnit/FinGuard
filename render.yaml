@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: finguard-api
+    runtime: node
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma db push && node dist/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: finguard-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
