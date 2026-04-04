@@ -9,7 +9,9 @@
         "build": "tsc",
         "postinstall": "prisma generate",
         "lint": "eslint src/**/*.ts",
-        "prisma:migrate": "prisma migrate deploy"
+        "prisma:migrate": "prisma migrate deploy",
+        "render:build": "npm install && npx prisma generate && npm run build",
+        "render:start": "npx prisma db push && node dist/server.js"
     },
     "dependencies": {
         "@prisma/client": "^5.10.0",
