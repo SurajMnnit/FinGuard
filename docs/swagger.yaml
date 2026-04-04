@@ -115,13 +115,54 @@ paths:
 
   /api/records:
     get:
-      summary: Get all records
+      summary: Get records (Scoped by role - Viewers see own, Analysts/Admins see all)
       tags: [Records]
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Records per page
+          schema:
+            type: integer
+            default: 10
+        - name: type
+          in: query
+          description: Filter by type
+          schema:
+            type: string
+            enum: [INCOME, EXPENSE]
+        - name: category
+          in: query
+          description: Filter by category
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          description: Filter by start date (ISO format)
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: Filter by end date (ISO format)
+          schema:
+            type: string
+            format: date-time
+        - name: search
+          in: query
+          description: Search in category or description
+          schema:
+            type: string
       responses:
         '200':
-          description: OK
+          description: Successful response with records and pagination
     post:
-      summary: Create a new record
+      summary: Create a new record (Admin and Analyst only)
       tags: [Records]
       requestBody:
         required: true
@@ -143,12 +184,15 @@ paths:
                   format: date-time
                 description:
                   type: string
+                userId:
+                  type: integer
+                  description: "For Admins: target user ID for this record"
       responses:
         '201':
           description: Created
   /api/records/{id}:
     get:
-      summary: Get a record by ID
+      summary: Get a record by ID (Scoped)
       tags: [Records]
       parameters:
         - in: path
@@ -160,7 +204,7 @@ paths:
         '200':
           description: OK
     put:
-      summary: Update a record by ID
+      summary: Update a record by ID (Admin only)
       tags: [Records]
       parameters:
         - in: path
@@ -187,11 +231,13 @@ paths:
                   format: date-time
                 description:
                   type: string
+                userId:
+                  type: integer
       responses:
         '200':
           description: OK
     delete:
-      summary: Delete a record by ID
+      summary: Delete a record by ID (Admin only)
       tags: [Records]
       parameters:
         - in: path
@@ -202,6 +248,8 @@ paths:
       responses:
         '200':
           description: OK
+
+
 
   /api/dashboard:
     get:

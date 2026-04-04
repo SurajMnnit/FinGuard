@@ -11,15 +11,16 @@ import {
 
 export const create = catchAsync(async (req: AuthRequest, res: Response) => {
     const userId = req.user.id;
-    const record = await createRecord(userId, req.body);
+    const role = req.user.role;
+    const record = await createRecord(userId, role, req.body);
     res.status(201).json({ success: true, data: record });
 });
 
 export const getAll = catchAsync(async (req: AuthRequest, res: Response) => {
     const userId = req.user.id;
     const role = req.user.role;
-    const records = await getRecords(userId, role);
-    res.status(200).json({ success: true, data: records });
+    const records = await getRecords(userId, role, req.query);
+    res.status(200).json({ success: true, ...records });
 });
 
 export const getOne = catchAsync(async (req: AuthRequest, res: Response) => {

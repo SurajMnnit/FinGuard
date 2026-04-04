@@ -7,6 +7,19 @@ export const createRecordSchema = {
         category: Joi.string().required(),
         date: Joi.date().iso().required(),
         description: Joi.string().optional().allow(''),
+        userId: Joi.number().integer().optional(), // Allow Admin to set userId
+    }),
+};
+
+export const getRecordsQuerySchema = {
+    query: Joi.object().keys({
+        page: Joi.number().integer().min(1).default(1),
+        limit: Joi.number().integer().min(1).max(100).default(10),
+        type: Joi.string().valid('INCOME', 'EXPENSE'),
+        category: Joi.string(),
+        startDate: Joi.date().iso(),
+        endDate: Joi.date().iso(),
+        search: Joi.string().allow(''),
     }),
 };
 
@@ -20,6 +33,7 @@ export const updateRecordSchema = {
         category: Joi.string(),
         date: Joi.date().iso(),
         description: Joi.string().allow(''),
+        userId: Joi.number().integer(),
     }).min(1),
 };
 
@@ -28,3 +42,4 @@ export const getRecordParamsSchema = {
         id: Joi.number().integer().required(),
     }),
 };
+
