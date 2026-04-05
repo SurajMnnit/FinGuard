@@ -32,7 +32,8 @@ export const getRecords = async (userId: number, role: string, filters: any) => 
         endDate, 
         category, 
         type, 
-        search 
+        search,
+        userId: targetUserId
     } = filters;
 
     const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
@@ -40,9 +41,12 @@ export const getRecords = async (userId: number, role: string, filters: any) => 
 
     const where: any = {};
 
-    // Role-based scoping
+    // Role-based scoping: VIEWERS can only see their own records.
+    // ADMINS and ANALYSTS can see everything and can optionally filter by targetUserId.
     if (role !== 'ADMIN' && role !== 'ANALYST') {
         where.userId = userId;
+    } else if (targetUserId) {
+        where.userId = parseInt(targetUserId, 10);
     }
 
     // Filtering
@@ -105,32 +109,49 @@ export const getRecordById = async (userId: number, role: string, recordId: numb
 };
 
 export const updateRecord = async (userId: number, role: string, recordId: number, data: any) => {
-    const record = await getRecordById(userId, role, recordId);
+    const record = await prisma.record.findUnique({ where: { id: recordId } });
+    if (!record) {
+        throw new ApiError(404, 'Record not found');
+    }
 
-    // If we want to allow updating date, we must parse it
+    // Ownership Security: Users can ONLY access their own records unless they are ADMIN
+    if (record.userId !== userId && role !== 'ADMIN') {
+        throw new ApiError(403, 'Forbidden: You do not have permission to modify this record');
+    }
+
     const { userId: targetUserId, ...updateData } = data;
     
+    // Parse date if updated
     if (updateData.date) {
         updateData.date = new Date(updateData.date);
     }
 
     const finalData = { ...updateData };
+    // Only Admin can reassign ownership
     if (role === 'ADMIN' && targetUserId) {
         finalData.userId = targetUserId;
     }
 
     return prisma.record.update({
-        where: { id: record.id },
+        where: { id: recordId },
         data: finalData,
     });
 };
 
 
 export const deleteRecord = async (userId: number, role: string, recordId: number) => {
-    const record = await getRecordById(userId, role, recordId);
+    const record = await prisma.record.findUnique({ where: { id: recordId } });
+    if (!record) {
+        throw new ApiError(404, 'Record not found');
+    }
+
+    // Ownership Security: Users can ONLY delete their own records unless they are ADMIN
+    if (record.userId !== userId && role !== 'ADMIN') {
+        throw new ApiError(403, 'Forbidden: You do not have permission to delete this record');
+    }
 
     await prisma.record.delete({
-        where: { id: record.id },
+        where: { id: recordId },
     });
 
     return { message: 'Record deleted successfully' };

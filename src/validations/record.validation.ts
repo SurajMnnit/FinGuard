@@ -20,6 +20,7 @@ export const getRecordsQuerySchema = {
         startDate: Joi.date().iso(),
         endDate: Joi.date().iso(),
         search: Joi.string().allow(''),
+        userId: Joi.number().integer(),
     }),
 };
 

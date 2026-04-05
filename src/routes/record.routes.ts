@@ -15,8 +15,8 @@ const router = Router();
 router.use(authenticate);
 
 // Everyone authenticated can get records (access scoping is handled in the service)
-router.get('/', validate(getRecordsQuerySchema), getAll);
-router.get('/:id', validate(getRecordParamsSchema), getOne);
+router.get('/', authorize('VIEWER', 'ANALYST', 'ADMIN'), validate(getRecordsQuerySchema), getAll);
+router.get('/:id', authorize('VIEWER', 'ANALYST', 'ADMIN'), validate(getRecordParamsSchema), getOne);
 
 // Only Admins can modify records (Viewers and Analysts are read-only as per requirements)
 router.post('/', authorize('ADMIN'), validate(createRecordSchema), create);
