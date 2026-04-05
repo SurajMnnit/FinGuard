@@ -162,7 +162,7 @@ paths:
         '200':
           description: Successful response with records and pagination
     post:
-      summary: Create a new record (Admin and Analyst only)
+      summary: Create a new record (Admin only)
       tags: [Records]
       requestBody:
         required: true
@@ -249,11 +249,37 @@ paths:
         '200':
           description: OK
 
-
-
   /api/dashboard:
     get:
-      summary: Get dashboard analytics calculations
+      summary: Get full dashboard analytics (Analysts and Admins only)
+      tags: [Dashboard]
+      responses:
+        '200':
+          description: OK
+  /api/dashboard/summary:
+    get:
+      summary: Get financial summary (Income, Expense, Balance)
+      tags: [Dashboard]
+      responses:
+        '200':
+          description: OK
+  /api/dashboard/category:
+    get:
+      summary: Get category-wise totals
+      tags: [Dashboard]
+      responses:
+        '200':
+          description: OK
+  /api/dashboard/trends:
+    get:
+      summary: Get monthly financial trends
+      tags: [Dashboard]
+      responses:
+        '200':
+          description: OK
+  /api/dashboard/recent:
+    get:
+      summary: Get recent transactions
       tags: [Dashboard]
       responses:
         '200':

@@ -8,7 +8,7 @@ import { updateRoleSchema, updateStatusSchema } from '../validations/user.valida
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize(['ADMIN']));
+router.use(authorize('ADMIN'));
 
 router.get('/', getUsers);
 router.put('/:id/role', validate(updateRoleSchema), updateRole);

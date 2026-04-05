@@ -18,12 +18,10 @@ router.use(authenticate);
 router.get('/', validate(getRecordsQuerySchema), getAll);
 router.get('/:id', validate(getRecordParamsSchema), getOne);
 
-// Only Admins and Analysts can create records (Viewers cannot)
-router.post('/', authorize(['ADMIN', 'ANALYST']), validate(createRecordSchema), create);
-
-// Only Admins can update or delete records (Ensure full control for Admin)
-router.put('/:id', authorize(['ADMIN']), validate(updateRecordSchema), update);
-router.delete('/:id', authorize(['ADMIN']), validate(getRecordParamsSchema), remove);
+// Only Admins can modify records (Viewers and Analysts are read-only as per requirements)
+router.post('/', authorize('ADMIN'), validate(createRecordSchema), create);
+router.put('/:id', authorize('ADMIN'), validate(updateRecordSchema), update);
+router.delete('/:id', authorize('ADMIN'), validate(getRecordParamsSchema), remove);
 
 export default router;
 

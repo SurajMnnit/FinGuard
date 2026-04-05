@@ -1,10 +1,9 @@
 import prisma from '../config/prisma';
 
-export const getDashboardAnalytics = async (userId: number, role: string) => {
+export const getSummary = async (userId: number, role: string) => {
     const isPrivileged = role === 'ADMIN' || role === 'ANALYST';
     const whereClause = isPrivileged ? {} : { userId };
 
-    // 1. Total Income & Total Expense
     const aggregations = await prisma.record.groupBy({
         by: ['type'],
         where: whereClause,
@@ -21,9 +20,17 @@ export const getDashboardAnalytics = async (userId: number, role: string) => {
         if (agg.type === 'EXPENSE') totalExpense = agg._sum.amount || 0;
     });
 
-    const netBalance = totalIncome - totalExpense;
+    return {
+        totalIncome,
+        totalExpense,
+        netBalance: totalIncome - totalExpense,
+    };
+};
 
-    // 2. Category-wise Totals
+export const getCategoryTotals = async (userId: number, role: string) => {
+    const isPrivileged = role === 'ADMIN' || role === 'ANALYST';
+    const whereClause = isPrivileged ? {} : { userId };
+
     const categoryTotals = await prisma.record.groupBy({
         by: ['category', 'type'],
         where: whereClause,
@@ -37,13 +44,16 @@ export const getDashboardAnalytics = async (userId: number, role: string) => {
         },
     });
 
-    const categoryData = categoryTotals.map((cat: any) => ({
+    return categoryTotals.map((cat: any) => ({
         category: cat.category,
         type: cat.type,
         total: cat._sum.amount || 0,
     }));
+};
 
-    // 3. Monthly Trends (Using raw query for date formatting)
+export const getMonthlyTrends = async (userId: number, role: string) => {
+    const isPrivileged = role === 'ADMIN' || role === 'ANALYST';
+    
     let monthlyTrends: any[] = [];
     try {
         if (isPrivileged) {
@@ -68,38 +78,38 @@ export const getDashboardAnalytics = async (userId: number, role: string) => {
                 ORDER BY month ASC
             `;
         }
-        // Parse BigInt to Number — prisma.$queryRaw may return BigInt for SUM
-        monthlyTrends = monthlyTrends.map((trend: any) => ({
+        return monthlyTrends.map((trend: any) => ({
             ...trend,
             total: Number(trend.total),
         }));
     } catch (error) {
         console.error('Error fetching monthly trends:', error);
+        return [];
     }
+};
 
-    // 4. Recent Transactions
-    let recentTransactions;
-    if (isPrivileged) {
-        recentTransactions = await prisma.record.findMany({
-            where: whereClause,
-            orderBy: { date: 'desc' },
-            take: 5,
-            include: { user: { select: { id: true, name: true } } },
-        });
-    } else {
-        recentTransactions = await prisma.record.findMany({
-            where: whereClause,
-            orderBy: { date: 'desc' },
-            take: 5,
-        });
-    }
+export const getRecentTransactions = async (userId: number, role: string) => {
+    const isPrivileged = role === 'ADMIN' || role === 'ANALYST';
+    const whereClause = isPrivileged ? {} : { userId };
+
+    return prisma.record.findMany({
+        where: whereClause,
+        orderBy: { date: 'desc' },
+        take: 5,
+        include: isPrivileged ? { user: { select: { id: true, name: true } } } : undefined,
+    });
+};
+
+export const getDashboardAnalytics = async (userId: number, role: string) => {
+    const [summary, categoryData, monthlyTrends, recentTransactions] = await Promise.all([
+        getSummary(userId, role),
+        getCategoryTotals(userId, role),
+        getMonthlyTrends(userId, role),
+        getRecentTransactions(userId, role),
+    ]);
 
     return {
-        overview: {
-            totalIncome,
-            totalExpense,
-            netBalance,
-        },
+        overview: summary,
         categoryData,
         monthlyTrends,
         recentTransactions,

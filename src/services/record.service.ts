@@ -1,10 +1,18 @@
 import prisma from '../config/prisma';
 import { ApiError } from '../utils/ApiError';
 
+/**
+ * Create a new financial record
+ * @param userId - ID of the user performing the action
+ * @param role - Role of the user performing the action
+ * @param data - Record data
+ * @returns The created record
+ */
 export const createRecord = async (userId: number, role: string, data: any) => {
     const { userId: targetUserId, ...recordData } = data;
     
-    // Only Admin can specify a different userId
+    // RBAC: Only Admin can specify a different userId for which to create a record 
+    // This allows admins to add records on behalf of other users.
     const finalUserId = (role === 'ADMIN' && targetUserId) ? targetUserId : userId;
 
     return prisma.record.create({
